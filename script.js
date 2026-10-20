@@ -1,96 +1,155 @@
-const resources = {
-  car: ["Машинка 1","Машинка 2","Машинка 3","Машинка 4","Машинка 5","Машинка 6","Машинка 7"],
-  ps: ["PlayStation 1","PlayStation 2"],
-  vr: ["VR 1","VR 2","VR 3"]
-};
+const $ = id => document.getElementById(id);
 
-const prices = {
-  car: [200,300,500],
-  vr: [200,300,500],
-  ps: [100,150,200,300]
-};
+const hour = $("hour");
+const minute = $("minute");
+const service = $("service");
+const number = $("number");
+const price = $("price");
+const customWrap = $("customWrap");
+const customPrice = $("customPrice");
+const payment = $("payment");
+const rows = $("rows");
+const empty = $("empty");
+const count = $("count");
+const cash = $("cash");
+const terminal = $("terminal");
+const total = $("total");
+const date = $("date");
 
-const hour = document.getElementById("hour");
-const minute = document.getElementById("minute");
-const service = document.getElementById("service");
-const resource = document.getElementById("resource");
-const price = document.getElementById("price");
-const customPrice = document.getElementById("customPrice");
-const payment = document.getElementById("payment");
-const body = document.getElementById("bookingsBody");
+let records = JSON.parse(localStorage.getItem("adrenaline_records") || "[]");
 
-let bookings = JSON.parse(localStorage.getItem("adrenalineBookings") || "[]");
-
-for(let h=11; h<=22; h++) hour.add(new Option(String(h).padStart(2,"0"), h));
-for(let m=0; m<60; m++) minute.add(new Option(String(m).padStart(2,"0"), m));
-
-function updateResources(){
-  resource.innerHTML="";
-  resources[service.value].forEach((name,i)=>resource.add(new Option(name,i)));
-  price.innerHTML="";
-  prices[service.value].forEach(v=>price.add(new Option(v+" ₴",v)));
-  price.add(new Option("Інша сума","custom"));
-  customPrice.hidden = true;
+for (let h = 11; h <= 22; h++) {
+  hour.add(new Option(String(h).padStart(2,"0"), h));
 }
-service.addEventListener("change", updateResources);
-price.addEventListener("change", ()=>customPrice.hidden = price.value !== "custom");
-
-function save(){localStorage.setItem("adrenalineBookings",JSON.stringify(bookings));}
-
-function render(){
-  bookings.sort((a,b)=>a.time.localeCompare(b.time));
-  body.innerHTML="";
-  document.getElementById("empty").style.display=bookings.length ? "none":"block";
-
-  let cash=0, terminal=0;
-  bookings.forEach((b,i)=>{
-    if(b.payment==="cash") cash+=b.amount; else terminal+=b.amount;
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td><strong>${b.time}</strong></td>
-      <td>${b.serviceName}</td>
-      <td><span class="badge">${b.resource}</span></td>
-      <td><strong>${b.amount} ₴</strong></td>
-      <td>${b.payment==="cash"?"💵 Готівка":"💳 Термінал"}</td>
-      <td><button class="delete" data-index="${i}">🗑</button></td>`;
-    body.appendChild(tr);
-  });
-
-  document.getElementById("cashTotal").textContent=cash+" ₴";
-  document.getElementById("terminalTotal").textContent=terminal+" ₴";
-  document.getElementById("grandTotal").textContent=(cash+terminal)+" ₴";
-  document.getElementById("count").textContent=bookings.length;
-  document.getElementById("dateLabel").textContent=new Date().toLocaleDateString("uk-UA");
+for (let m = 0; m <= 59; m++) {
+  minute.add(new Option(String(m).padStart(2,"0"), m));
 }
 
-document.getElementById("addBooking").onclick=()=>{
-  const amount=price.value==="custom" ? Number(customPrice.value) : Number(price.value);
-  if(!amount || amount<0) return alert("Вкажи суму");
+date.value = new Date().toISOString().slice(0,10);
 
-  bookings.push({
-    time:`${String(hour.value).padStart(2,"0")}:${String(minute.value).padStart(2,"0")}`,
-    service:service.value,
-    serviceName:service.options[service.selectedIndex].text,
-    resource:resource.options[resource.selectedIndex].text,
-    amount,
-    payment:payment.value
-  });
-  save(); render();
-  customPrice.value="";
-};
-
-body.addEventListener("click",e=>{
-  const btn=e.target.closest(".delete");
-  if(!btn) return;
-  bookings.splice(Number(btn.dataset.index),1);
-  save(); render();
+function updateNumbers() {
+  const max = service.value === "Машинка" ? 7 : service.value === "PlayStation" ? 2 : 3;
+  number.innerHTML = "";
+  for (let i = 1; i <= max; i++) {
+    number.add(new Option(String(i), i));
+  }
+}
+service.addEventListener("change", updateNumbers);
+price.addEventListener("change", () => {
+  customWrap.classList.toggle("hidden", price.value !== "other");
 });
+updateNumbers();
 
-document.getElementById("clearDay").onclick=()=>{
-  if(confirm("Очистити всі бронювання за сьогодні?")){
-    bookings=[]; save(); render();
+function getAmount() {
+  if (price.value === "other") return Number(customPrice.value || 0);
+  return Number(price.value);
+}
+
+function save() {
+  localStorage.setItem("adrenaline_records", JSON.stringify(records));
+}
+
+function money(n) {
+  return `${n.toLocaleString("uk-UA")} ₴`;
+}
+
+function render() {
+  rows.innerHTML = "";
+  let c = 0, t = 0;
+
+  const sorted = [...records].sort((a,b) => a.time.localeCompare(b.time));
+
+  sorted.forEach(r => {
+    if (r.payment === "Готівка") c += r.amount;
+    else t += r.amount;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><b>${r.time}</b></td>
+      <td>${r.service}</td>
+      <td>${r.number}</td>
+      <td><b>${money(r.amount)}</b></td>
+      <td>${r.payment === "Готівка" ? "💵 Готівка" : "💳 Термінал"}</td>
+      <td><button class="delete" data-id="${r.id}">🗑</button></td>
+    `;
+    rows.appendChild(tr);
+  });
+
+  empty.style.display = sorted.length ? "none" : "block";
+  count.textContent = `${sorted.length} ${sorted.length === 1 ? "запис" : "записів"}`;
+  cash.textContent = money(c);
+  terminal.textContent = money(t);
+  total.textContent = money(c + t);
+
+  document.querySelectorAll(".delete").forEach(btn => {
+    btn.onclick = () => {
+      records = records.filter(r => r.id !== Number(btn.dataset.id));
+      save();
+      render();
+    };
+  });
+}
+
+$("addBtn").onclick = () => {
+  const amount = getAmount();
+  if (!amount || amount < 0) {
+    alert("Вкажи суму.");
+    return;
+  }
+
+  records.push({
+    id: Date.now(),
+    time: `${String(hour.value).padStart(2,"0")}:${String(minute.value).padStart(2,"0")}`,
+    service: service.value,
+    number: number.value,
+    amount,
+    payment: payment.value
+  });
+
+  save();
+  render();
+  customPrice.value = "";
+};
+
+$("clearBtn").onclick = () => {
+  if (!records.length) return;
+  if (confirm("Точно очистити весь звіт?")) {
+    records = [];
+    save();
+    render();
   }
 };
 
-updateResources();
+$("copyBtn").onclick = async () => {
+  const selectedDate = date.value || new Date().toISOString().slice(0,10);
+  const sorted = [...records].sort((a,b) => a.time.localeCompare(b.time));
+  let c = 0, t = 0;
+
+  const lines = [
+    `📋 ЗВІТ ЗА ${selectedDate.split("-").reverse().join(".")}`,
+    `━━━━━━━━━━━━━━━━━━━━`
+  ];
+
+  sorted.forEach((r, i) => {
+    if (r.payment === "Готівка") c += r.amount;
+    else t += r.amount;
+    lines.push(`${i+1}. ${r.time} | ${r.service} №${r.number} | ${r.amount} ₴ | ${r.payment}`);
+  });
+
+  lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+  lines.push(`💵 Готівка: ${c} ₴`);
+  lines.push(`💳 Термінал: ${t} ₴`);
+  lines.push(`💰 РАЗОМ: ${c+t} ₴`);
+  lines.push(`📌 Записів: ${sorted.length}`);
+
+  const text = lines.join("\n");
+  try {
+    await navigator.clipboard.writeText(text);
+    $("copyBtn").textContent = "✅ Скопійовано!";
+    setTimeout(() => $("copyBtn").textContent = "📋 Скопіювати звіт", 1400);
+  } catch {
+    prompt("Скопіюй звіт:", text);
+  }
+};
+
 render();

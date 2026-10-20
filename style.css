@@ -78,3 +78,5 @@ tfoot th { background:#dfe5ec; font-weight:800; }
   .report-head { align-items:stretch; flex-direction:column; }
   .copy { width:100%; }
 }
+
+.payment-label { font-weight: 700; white-space: nowrap; }

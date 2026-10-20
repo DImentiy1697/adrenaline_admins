@@ -137,7 +137,7 @@ function render() {
 
       const span = document.createElement("span");
       span.className = "cell-entry";
-      const paymentLabel = e.payment === "cash" ? "💵 НАЛ" : "💳 ТЕРМІНАЛ";
+      const paymentLabel = e.payment === "cash" ? "💵 НАЛ" : "💳 Т";
       span.innerHTML = `${String(e.hour).padStart(2,"0")}:${String(e.minute).padStart(2,"0")} / ${e.amount} ₴ <span class="payment-label">${paymentLabel}</span> <span class="delete" title="Видалити">×</span>`;
       span.querySelector(".delete").onclick = () => {
         entries = entries.filter(x => x.id !== e.id);

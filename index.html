@@ -1,104 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Adrenaline — Звіт зміни</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Adrenaline — звіт зміни</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <header>
-      <div>
-        <h1>📋 Звіт зміни</h1>
-        <p>Бронювання та каса</p>
-      </div>
-      <input id="date" type="date">
-    </header>
+<div class="app">
+  <header>
+    <h1>Adrenaline — звіт зміни</h1>
+    <div class="date-row">
+      <label>Дата <input id="date" type="date"></label>
+      <button id="clearBtn" class="danger">Очистити день</button>
+    </div>
+  </header>
 
-    <section class="card form-card">
-      <h2>➕ Додати запис</h2>
+  <section class="add-box">
+    <h2>Додати запис</h2>
+    <div class="form-grid">
+      <label>Час
+        <input id="time" type="time" min="11:00" max="22:59" value="11:00">
+      </label>
+      <label>Послуга
+        <select id="service">
+          <option value="car">Машинка</option>
+          <option value="ps">PlayStation</option>
+          <option value="vr">VR</option>
+        </select>
+      </label>
+      <label>№
+        <select id="number"></select>
+      </label>
+      <label>Сума, ₴
+        <select id="price">
+          <option>100</option><option>150</option><option selected>200</option>
+          <option>300</option><option>500</option><option value="custom">Інша</option>
+        </select>
+      </label>
+      <label id="customWrap" class="hidden">Своя сума
+        <input id="customPrice" type="number" min="0" step="10" placeholder="₴">
+      </label>
+      <label>Оплата
+        <select id="payment">
+          <option value="cash">Готівка</option>
+          <option value="card">Термінал</option>
+        </select>
+      </label>
+      <button id="addBtn" class="add">+ Додати</button>
+    </div>
+  </section>
 
-      <div class="grid">
-        <label>Час
-          <div class="time-row">
-            <select id="hour"></select>
-            <select id="minute"></select>
-          </div>
-        </label>
-
-        <label>Послуга
-          <select id="service">
-            <option value="Машинка">🏎️ Машинка</option>
-            <option value="PlayStation">🎮 PlayStation</option>
-            <option value="VR">🥽 VR</option>
-          </select>
-        </label>
-
-        <label>№
-          <select id="number"></select>
-        </label>
-
-        <label>Сума
-          <select id="price">
-            <option value="200">200 ₴</option>
-            <option value="300">300 ₴</option>
-            <option value="500">500 ₴</option>
-            <option value="other">Інша сума</option>
-          </select>
-        </label>
-
-        <label id="customWrap" class="hidden">Власна сума
-          <input id="customPrice" type="number" min="0" step="1" placeholder="Наприклад 400">
-        </label>
-
-        <label>Оплата
-          <select id="payment">
-            <option value="Готівка">💵 Готівка</option>
-            <option value="Термінал">💳 Термінал</option>
-          </select>
-        </label>
-      </div>
-
-      <button id="addBtn" class="primary">Додати в таблицю</button>
-    </section>
-
-    <section class="card">
-      <div class="table-head">
-        <div>
-          <h2>📊 Загальний звіт</h2>
-          <span id="count">0 записів</span>
-        </div>
-        <button id="copyBtn" class="secondary">📋 Скопіювати звіт</button>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Час</th>
-              <th>Послуга</th>
-              <th>№</th>
-              <th>Сума</th>
-              <th>Оплата</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-        <div id="empty" class="empty">Поки що записів немає</div>
-      </div>
-
-      <div class="totals">
-        <div><span>💵 Готівка</span><b id="cash">0 ₴</b></div>
-        <div><span>💳 Термінал</span><b id="terminal">0 ₴</b></div>
-        <div class="grand"><span>💰 Разом</span><b id="total">0 ₴</b></div>
-      </div>
-
-      <button id="clearBtn" class="danger">🗑 Очистити весь звіт</button>
-    </section>
-  </main>
-
-  <script src="script.js"></script>
+  <section class="report">
+    <div class="report-head">
+      <h2>Таблиця зміни</h2>
+      <button id="copyBtn">📋 Скопіювати звіт</button>
+    </div>
+    <div class="table-wrap">
+      <table id="reportTable">
+        <thead>
+          <tr>
+            <th>Час</th>
+            <th>Машинки</th>
+            <th>PlayStation</th>
+            <th>VR</th>
+            <th>💵 Готівка</th>
+            <th>💳 Термінал</th>
+            <th>Разом</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <th>РАЗОМ</th>
+            <th id="totalCar">0 ₴</th>
+            <th id="totalPs">0 ₴</th>
+            <th id="totalVr">0 ₴</th>
+            <th id="totalCash">0 ₴</th>
+            <th id="totalCard">0 ₴</th>
+            <th id="totalAll">0 ₴</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="hint">На телефоні таблицю можна просто заскрінити. Дані зберігаються в цьому браузері.</div>
+  </section>
+</div>
+<script src="script.js"></script>
 </body>
 </html>

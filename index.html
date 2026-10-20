@@ -1,72 +1,96 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adrenaline Admin</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adrenaline — Бронювання</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
+  <main class="app">
     <header>
-        <h1>⚡ Adrenaline</h1>
-        <p>Адмін-панель бронювання</p>
+      <div>
+        <h1>📋 Бронювання</h1>
+        <p>Adrenaline Admin</p>
+      </div>
+      <button id="clearDay" class="danger">🗑 Очистити день</button>
     </header>
 
-    <section class="card">
-        <h2>Нове бронювання</h2>
+    <section class="panel form-panel">
+      <h2>➕ Додати бронювання</h2>
 
-        <label>Час</label>
-        <div class="time-row">
-            <select id="hour"><option value="">Година</option></select>
-            <select id="minute"><option value="">Хвилина</option></select>
-        </div>
+      <div class="form-grid">
+        <label>Час
+          <div class="time-row">
+            <select id="hour"></select>
+            <select id="minute"></select>
+          </div>
+        </label>
 
-        <label>Послуга</label>
-        <div class="service-buttons">
-            <button class="service" data-service="car">🏎️ Машинка</button>
-            <button class="service" data-service="vr">🥽 VR</button>
-            <button class="service" data-service="ps">🎮 PlayStation</button>
-        </div>
+        <label>Послуга
+          <select id="service">
+            <option value="car">🏎️ Машинка</option>
+            <option value="ps">🎮 PlayStation</option>
+            <option value="vr">🥽 VR</option>
+          </select>
+        </label>
 
-        <div id="resourceBlock" class="hidden">
-            <label>Номер</label>
-            <div id="resources" class="resource-buttons"></div>
-        </div>
+        <label>Ресурс
+          <select id="resource"></select>
+        </label>
 
-        <div id="priceBlock" class="hidden">
-            <label>Ціна</label>
-            <div id="prices" class="price-buttons"></div>
-            <div id="customPriceBlock" class="hidden">
-                <input type="number" id="customPrice" placeholder="Введіть суму" min="0">
-            </div>
-        </div>
+        <label>Ціна
+          <select id="price">
+            <option value="200">200 ₴</option>
+            <option value="300">300 ₴</option>
+            <option value="500">500 ₴</option>
+            <option value="custom">Інша сума</option>
+          </select>
+          <input id="customPrice" type="number" min="0" placeholder="Сума, ₴" hidden>
+        </label>
 
-        <div id="paymentBlock" class="hidden">
-            <label>Оплата</label>
-            <div class="payment-buttons">
-                <button class="payment" data-payment="cash">💵 Готівка</button>
-                <button class="payment" data-payment="terminal">💳 Термінал</button>
-            </div>
-        </div>
+        <label>Оплата
+          <select id="payment">
+            <option value="cash">💵 Готівка</option>
+            <option value="terminal">💳 Термінал</option>
+          </select>
+        </label>
 
-        <button id="addBooking" class="add-button">➕ Додати бронювання</button>
+        <button id="addBooking" class="primary">Додати</button>
+      </div>
     </section>
 
-    <section class="card">
-        <h2>📋 Бронювання</h2>
-        <div id="bookings"></div>
-        <div id="emptyMessage" class="empty">Поки що бронювань немає</div>
+    <section class="panel">
+      <div class="section-title">
+        <h2>📊 Таблиця бронювань</h2>
+        <span id="dateLabel"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Час</th>
+              <th>Послуга</th>
+              <th>Ресурс</th>
+              <th>Сума</th>
+              <th>Оплата</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bookingsBody"></tbody>
+        </table>
+        <div id="empty" class="empty">Поки немає бронювань</div>
+      </div>
     </section>
 
     <section class="stats">
-        <div class="stat"><span>💵 Готівка</span><strong id="cashTotal">0 ₴</strong></div>
-        <div class="stat"><span>💳 Термінал</span><strong id="terminalTotal">0 ₴</strong></div>
-        <div class="stat total"><span>💰 Разом</span><strong id="total">0 ₴</strong></div>
+      <div><span>💵 Готівка</span><strong id="cashTotal">0 ₴</strong></div>
+      <div><span>💳 Термінал</span><strong id="terminalTotal">0 ₴</strong></div>
+      <div><span>💰 Разом</span><strong id="grandTotal">0 ₴</strong></div>
+      <div><span>📋 Бронювань</span><strong id="count">0</strong></div>
     </section>
-
-    <button id="clearDay" class="clear-button">🗑️ Очистити день</button>
-</div>
-<script src="script.js"></script>
+  </main>
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,132 +1,200 @@
-const dateEl=document.getElementById("date");
-const timeEl=document.getElementById("time");
-const serviceEl=document.getElementById("service");
-const numberEl=document.getElementById("number");
-const priceEl=document.getElementById("price");
-const customWrap=document.getElementById("customWrap");
-const customPriceEl=document.getElementById("customPrice");
-const paymentEl=document.getElementById("payment");
-const tbody=document.querySelector("#reportTable tbody");
+const $ = id => document.getElementById(id);
 
-const names={car:"Машинка",ps:"PlayStation",vr:"VR"};
-const counts={car:7,ps:2,vr:3};
+const serviceNames = { car: "Машинка", ps: "PlayStation", vr: "VR" };
+const counts = { car: 7, ps: 2, vr: 3 };
+const prices = {
+  car: [200, 300, 500],
+  vr: [200, 300, 500],
+  ps: [100, 150, 200, 300]
+};
 
-function today(){
-  const d=new Date(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
-  return `${d.getFullYear()}-${m}-${day}`;
+let entries = JSON.parse(localStorage.getItem("adrenaline_entries") || "[]");
+
+function today() {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
 }
-dateEl.value=today();
 
-function key(){return `adrenaline-report-${dateEl.value}`;}
-function getData(){return JSON.parse(localStorage.getItem(key())||"[]");}
-function saveData(data){localStorage.setItem(key(),JSON.stringify(data));}
+$("date").value = today();
 
-function updateNumbers(){
-  const n=counts[serviceEl.value];
-  numberEl.innerHTML="";
-  for(let i=1;i<=n;i++){
-    const o=document.createElement("option"); o.value=i;o.textContent=i;numberEl.appendChild(o);
+for (let h = 11; h <= 22; h++) {
+  const o = document.createElement("option");
+  o.value = h; o.textContent = String(h).padStart(2,"0");
+  $("hour").appendChild(o);
+}
+for (let m = 0; m < 60; m++) {
+  const o = document.createElement("option");
+  o.value = m; o.textContent = String(m).padStart(2,"0");
+  $("minute").appendChild(o);
+}
+
+function updateNumbers() {
+  const service = $("service").value;
+  $("number").innerHTML = "";
+  for (let i = 1; i <= counts[service]; i++) {
+    const o = document.createElement("option");
+    o.value = i; o.textContent = i;
+    $("number").appendChild(o);
   }
-}
-function updatePrice(){
-  customWrap.classList.toggle("hidden",priceEl.value!=="custom");
-}
-serviceEl.addEventListener("change",updateNumbers);
-priceEl.addEventListener("change",updatePrice);
-dateEl.addEventListener("change",render);
 
-function add(){
-  let price=priceEl.value==="custom"?Number(customPriceEl.value):Number(priceEl.value);
-  if(!price || price<0){alert("Вкажи суму.");return;}
-  const data=getData();
-  data.push({
-    id:Date.now(),
-    time:timeEl.value,
-    service:serviceEl.value,
-    number:Number(numberEl.value),
-    price,
-    payment:paymentEl.value
+  $("amount").innerHTML = "";
+  prices[service].forEach(p => {
+    const o = document.createElement("option");
+    o.value = p; o.textContent = `${p} ₴`;
+    $("amount").appendChild(o);
   });
-  data.sort((a,b)=>a.time.localeCompare(b.time));
-  saveData(data); render();
+  const other = document.createElement("option");
+  other.value = "other"; other.textContent = "Інша сума";
+  $("amount").appendChild(other);
+  $("customAmountBox").classList.add("hidden");
 }
-document.getElementById("addBtn").addEventListener("click",add);
+$("service").addEventListener("change", updateNumbers);
+$("amount").addEventListener("change", () => {
+  $("customAmountBox").classList.toggle("hidden", $("amount").value !== "other");
+});
+updateNumbers();
 
-function money(n){return `${n.toLocaleString("uk-UA")} ₴`;}
-
-function remove(id){
-  saveData(getData().filter(x=>x.id!==id)); render();
+function save() {
+  localStorage.setItem("adrenaline_entries", JSON.stringify(entries));
 }
 
-function render(){
-  const data=getData();
-  tbody.innerHTML="";
-  let totals={car:0,ps:0,vr:0,cash:0,card:0,all:0};
-  for(let h=11;h<=22;h++){
-    const hour=String(h).padStart(2,"0");
-    const tr=document.createElement("tr");
-    const hourData=data.filter(x=>x.time.startsWith(hour+":"));
-    const cells={car:[],ps:[],vr:[],cash:[],card:[]};
-    hourData.forEach(x=>{
-      const item=document.createElement("div");
-      item.className="cell-item";
-      item.innerHTML=`<span>${x.time} №${x.number} — ${money(x.price)}</span><button class="del" title="Видалити">×</button>`;
-      item.querySelector(".del").onclick=()=>remove(x.id);
-      cells[x.service].push(item);
-      cells[x.payment].push(x);
-      totals[x.service]+=x.price; totals[x.payment]+=x.price; totals.all+=x.price;
-    });
-    const th=document.createElement("th"); th.textContent=`${hour}:00`; tr.appendChild(th);
-    ["car","ps","vr"].forEach(s=>{
-      const td=document.createElement("td");
-      if(!cells[s].length) td.innerHTML='<span class="muted">—</span>';
-      else cells[s].forEach(e=>td.appendChild(e));
-      tr.appendChild(td);
-    });
-    ["cash","card"].forEach(p=>{
-      const td=document.createElement("td");
-      const sum=cells[p].reduce((a,x)=>a+x.price,0);
-      td.textContent=sum?money(sum):"—";
-      tr.appendChild(td);
-    });
-    const td=document.createElement("td"); 
-    const sum=hourData.reduce((a,x)=>a+x.price,0);
-    td.innerHTML=sum?`<b>${money(sum)}</b>`:"—"; tr.appendChild(td);
-    tbody.appendChild(tr);
+function selectedDay() {
+  return $("date").value;
+}
+
+$("addBtn").addEventListener("click", () => {
+  let amount = $("amount").value === "other"
+    ? Number($("customAmount").value)
+    : Number($("amount").value);
+
+  if (!amount || amount < 0) {
+    alert("Вкажи суму.");
+    return;
   }
-  document.getElementById("totalCar").textContent=money(totals.car);
-  document.getElementById("totalPs").textContent=money(totals.ps);
-  document.getElementById("totalVr").textContent=money(totals.vr);
-  document.getElementById("totalCash").textContent=money(totals.cash);
-  document.getElementById("totalCard").textContent=money(totals.card);
-  document.getElementById("totalAll").textContent=money(totals.all);
+
+  entries.push({
+    id: Date.now() + Math.random(),
+    date: selectedDay(),
+    hour: Number($("hour").value),
+    minute: Number($("minute").value),
+    service: $("service").value,
+    number: Number($("number").value),
+    amount,
+    payment: $("payment").value
+  });
+
+  save();
+  $("customAmount").value = "";
+  render();
+});
+
+$("date").addEventListener("change", render);
+
+$("clearBtn").addEventListener("click", () => {
+  if (!confirm("Очистити всі записи за цей день?")) return;
+  entries = entries.filter(e => e.date !== selectedDay());
+  save();
+  render();
+});
+
+function render() {
+  const day = selectedDay();
+  const dayEntries = entries.filter(e => e.date === day);
+
+  const body = $("tbody");
+  body.innerHTML = "";
+
+  for (let h = 11; h <= 22; h++) {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.textContent = `${String(h).padStart(2,"0")}:00`;
+    tr.appendChild(th);
+
+    const cols = [];
+    for (let i = 1; i <= 13; i++) {
+      const td = document.createElement("td");
+      td.className = "empty";
+      td.textContent = "—";
+      cols.push(td);
+      tr.appendChild(td);
+    }
+
+    const hourEntries = dayEntries
+      .filter(e => e.hour === h)
+      .sort((a,b) => a.minute - b.minute);
+
+    hourEntries.forEach(e => {
+      let index;
+      if (e.service === "car") index = e.number - 1;
+      if (e.service === "ps") index = 7 + e.number - 1;
+      if (e.service === "vr") index = 9 + e.number - 1;
+
+      const td = cols[index];
+      if (td.classList.contains("empty")) {
+        td.classList.remove("empty");
+        td.textContent = "";
+      }
+
+      const span = document.createElement("span");
+      span.className = "cell-entry";
+      span.innerHTML = `${String(e.hour).padStart(2,"0")}:${String(e.minute).padStart(2,"0")} / ${e.amount} ₴ <span class="delete" title="Видалити">×</span>`;
+      span.querySelector(".delete").onclick = () => {
+        entries = entries.filter(x => x.id !== e.id);
+        save(); render();
+      };
+      td.appendChild(span);
+    });
+
+    body.appendChild(tr);
+  }
+
+  let cash = 0, terminal = 0;
+  const totals = {car:0, ps:0, vr:0};
+  dayEntries.forEach(e => {
+    totals[e.service] += e.amount;
+    if (e.payment === "cash") cash += e.amount;
+    else terminal += e.amount;
+  });
+
+  $("carTotal").textContent = `${totals.car} ₴`;
+  $("psTotal").textContent = `${totals.ps} ₴`;
+  $("vrTotal").textContent = `${totals.vr} ₴`;
+  $("cashTotal").textContent = `${cash} ₴`;
+  $("terminalTotal").textContent = `${terminal} ₴`;
+  $("grandTotal").textContent = `${cash + terminal} ₴`;
 }
 
-function reportText(){
-  const data=getData();
-  const d=new Date(dateEl.value+"T12:00:00");
-  const date=d.toLocaleDateString("uk-UA");
-  let lines=[`📋 ЗВІТ ЗА ${date}`,`━━━━━━━━━━━━━━━━━━━━`];
-  for(let h=11;h<=22;h++){
-    const hh=String(h).padStart(2,"0");
-    const rows=data.filter(x=>x.time.startsWith(hh+":"));
-    if(!rows.length) continue;
-    lines.push(`${hh}:00`);
-    rows.forEach(x=>lines.push(`  ${x.time} | ${names[x.service]} №${x.number} | ${x.price} ₴ | ${x.payment==="cash"?"Готівка":"Термінал"}`));
+function reportText() {
+  const day = selectedDay();
+  const dayEntries = entries.filter(e => e.date === day);
+  const lines = [`ADRENALINE — ЗВІТ ЗМІНИ`, `Дата: ${day}`, ""];
+  for (let h = 11; h <= 22; h++) {
+    const row = dayEntries.filter(e => e.hour === h).sort((a,b) => a.minute-b.minute);
+    if (!row.length) {
+      lines.push(`${String(h).padStart(2,"0")}:00 —`);
+      continue;
+    }
+    lines.push(`${String(h).padStart(2,"0")}:00`);
+    row.forEach(e => {
+      const p = e.payment === "cash" ? "готівка" : "термінал";
+      lines.push(`  ${String(e.hour).padStart(2,"0")}:${String(e.minute).padStart(2,"0")} | ${serviceNames[e.service]} ${e.number} | ${e.amount} ₴ | ${p}`);
+    });
   }
-  const cash=data.filter(x=>x.payment==="cash").reduce((a,x)=>a+x.price,0);
-  const card=data.filter(x=>x.payment==="card").reduce((a,x)=>a+x.price,0);
-  lines.push(`━━━━━━━━━━━━━━━━━━━━`,`💵 Готівка: ${cash} ₴`,`💳 Термінал: ${card} ₴`,`💰 РАЗОМ: ${cash+card} ₴`,`📌 Записів: ${data.length}`);
+  let cash=0, terminal=0;
+  dayEntries.forEach(e => e.payment === "cash" ? cash += e.amount : terminal += e.amount);
+  lines.push("", `Готівка: ${cash} ₴`, `Термінал: ${terminal} ₴`, `РАЗОМ: ${cash + terminal} ₴`);
   return lines.join("\n");
 }
-document.getElementById("copyBtn").addEventListener("click",async()=>{
-  try{
+
+$("copyBtn").addEventListener("click", async () => {
+  try {
     await navigator.clipboard.writeText(reportText());
-    alert("Звіт скопійовано — можна кидати в групу.");
-  }catch(e){prompt("Скопіюй звіт:",reportText());}
-});
-document.getElementById("clearBtn").addEventListener("click",()=>{
-  if(confirm("Очистити всі записи за цю дату?")){localStorage.removeItem(key());render();}
+    const old = $("copyBtn").textContent;
+    $("copyBtn").textContent = "✅ Скопійовано";
+    setTimeout(() => $("copyBtn").textContent = old, 1400);
+  } catch {
+    alert(reportText());
+  }
 });
 
-updateNumbers();updatePrice();render();
+render();
